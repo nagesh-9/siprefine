@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SIP Calculator with Graph</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 30px;
+      background: #f8f8f8;
+    }
+    h2 {
+      color: #333;
+    }
+    label {
+      display: inline-block;
+      width: 180px;
+      margin-top: 8px;
+    }
+    input {
+      margin: 5px;
+      padding: 6px;
+      width: 160px;
+    }
+    button {
+      margin: 10px 5px;
+      padding: 8px 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .sip-entry {
+      margin-bottom: 10px;
+      padding: 10px;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    #results {
+      margin-top: 20px;
+    }
+    canvas {
+      margin-top: 30px;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <h2>SIP Calculator with Graph</h2>
+
+  <div>
+    <label>Current Age:</label>
+    <input type="number" id="currentAge" min="0"><br>
+
+    <label>Target Age (to hold corpus):</label>
+    <input type="number" id="targetAge" min="0"><br>
+
+    <label>SWP Start Age (optional):</label>
+    <input type="number" id="swpStartAge" min="0"><br>
+
+    <label>SWP Monthly Amount (optional):</label>
+    <input type="number" id="swpAmount" min="0"><br>
+
+    <h3>SIP Entries</h3>
+    <div id="sipContainer"></div>
+    <button onclick="addSIPEntry()">Add SIP Entry</button>
+    <button onclick="calculateSIP()">Calculate</button>
+  </div>
+
+  <div id="result-area">
+    <div id="results"></div>
+    <canvas id="corpusChart" width="600" height="300"></canvas>
+  </div>
+
+  <script>
+    let sipEntries = [];
+    let chartInstance = null;
+
+    function addSIPEntry() {
+      const container = document.getElementById('sipContainer');
+
+      const div = document.createElement('div');
+      div.classList.add('sip-entry');
+
+      div.innerHTML = `
+        <label>SIP Amount (monthly):</label>
+        <input type="number" class="sip-amount"><br>
+        <label>Start Age:</label>
+        <input type="number" class="sip-start"><br>
+        <label>End Age:</label>
+        <input type="number" class="sip-end"><br>
+        <label>Expected Annual Return (%):</label>
+        <input type="number" class="sip-rate" step="0.01"><br>
+      `;
+
+      container.appendChild(div);
+
+      sipEntries.push({
+        amount: div.querySelector('.sip-amount'),
+        startAge: div.querySelector('.sip-start'),
+        endAge: div.querySelector('.sip-end'),
+        rate: div.querySelector('.sip-rate')
+      });
+    }
+
+    function calculateSIP() {
+      const currentAge = parseInt(document.getElementById('currentAge').value);
+      const targetAge = parseInt(document.getElementById('targetAge').value);
+      const swpStartAge = parseInt(document.getElementById('swpStartAge').value) || null;
+      const swpAmount = parseInt(document.getElementById('swpAmount').value) || 0;
+      const results = document.getElementById('results');
+      results.innerHTML = '';
+
+      if (isNaN(currentAge) || isNaN(targetAge)) {
+        results.innerText = "Please enter valid numeric values.";
+        return;
+      }
+
+      let corpus = 0;
+      let lastRate = 0;
+      const labels = [];
+      const data = [];
+
+      for (let age = currentAge; age <= targetAge; age++) {
+        let sipContrib = 0;
+        let anyActive = false;
+        let monthlyRate = 0;
+
+        for (let entry of sipEntries) {
+          const amount = parseInt(entry.amount.value);
+          const start = parseInt(entry.startAge.value);
+          const end = parseInt(entry.endAge.value);
+          const rate = parseFloat(entry.rate.value) / 100;
+
+          if (start <= age && age <= end) {
+            sipContrib += amount;
+            monthlyRate = rate / 12;
+            lastRate = rate;
+            anyActive = true;
+          }
+        }
+
+        for (let m = 0; m < 12; m++) {
+          if (anyActive) corpus += sipContrib;
+          corpus *= (1 + monthlyRate);
+        }
+
+        if (swpStartAge && age >= swpStartAge) {
+          for (let m = 0; m < 12; m++) {
+            if (corpus > swpAmount) corpus -= swpAmount;
+            else { corpus = 0; break; }
+            corpus *= (1 + lastRate / 12);
+          }
+        }
+
+        if (!anyActive && corpus > 0) {
+          for (let m = 0; m < 12; m++) {
+            corpus *= (1 + lastRate / 12);
+          }
+        }
+
+        results.innerHTML += `<div>Age ${age}: ₹${corpus.toFixed(2)}</div>`;
+        labels.push(`Age ${age}`);
+        data.push(corpus.toFixed(2));
+      }
+
+      renderChart(labels, data);
+    }
+
+    function renderChart(labels, data) {
+      const ctx = document.getElementById('corpusChart').getContext('2d');
+      if (chartInstance) chartInstance.destroy();
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Corpus Over Time',
+            data: data,
+            borderColor: 'green',
+            backgroundColor: 'rgba(0, 128, 0, 0.1)',
+            tension: 0.3,
+            fill: true,
+            pointRadius: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: true },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return `₹${parseFloat(context.raw).toLocaleString('en-IN')}`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: value => `₹${value.toLocaleString('en-IN')}`
+              }
+            }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>

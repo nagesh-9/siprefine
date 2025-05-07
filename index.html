@@ -393,6 +393,40 @@ async function downloadPDF() {
 
   // Remove the link from the DOM after the download is triggered
   document.body.removeChild(link);
+  
+  / Generate the PDF and create blob URL
+  const pdfBlob = pdf.output('blob');
+  const blobUrl = URL.createObjectURL(pdfBlob);
+  
+  // Check if running in Kodular (Android WebView)
+  if (typeof Android !== 'undefined') {
+    // Create a temporary download link
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = "SIP_Report.pdf";
+    
+    // Extract the filename and URL to send to Android
+    const downloadInfo = {
+      url: blobUrl,
+      filename: "SIP_Report.pdf"
+    };
+    
+    // Send to Kodular
+    Android.receiveDownloadInfo(JSON.stringify(downloadInfo));
+    
+    // Clean up later
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+  } else {
+    // Standard browser download
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = "SIP_Report.pdf";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
+  }
+}
 }
 
 

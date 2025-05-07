@@ -4,7 +4,10 @@
   <meta charset="UTF-8">
   <title>SIP REFINE</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
- <style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       margin: 0;
@@ -16,20 +19,17 @@
       align-items: center;
       min-height: 100vh;
     }
-
     h2 {
       margin-top: 40px;
       color: #2c3e50;
       font-size: 32px;
       letter-spacing: 1px;
     }
-
     h3 {
       color: #34495e;
       margin-bottom: 10px;
       font-size: 22px;
     }
-
     label {
       display: inline-block;
       width: 220px;
@@ -37,7 +37,6 @@
       font-weight: 500;
       color: #2d3436;
     }
-
     input {
       padding: 8px 10px;
       width: 200px;
@@ -46,12 +45,10 @@
       outline: none;
       transition: border 0.3s;
     }
-
     input:focus {
       border-color: #007bff;
       box-shadow: 0 0 5px rgba(0,123,255,0.4);
     }
-
     button {
       margin: 15px 8px;
       padding: 10px 20px;
@@ -63,11 +60,9 @@
       font-weight: 600;
       transition: background 0.3s;
     }
-
     button:hover {
       background: linear-gradient(145deg, #0056b3, #004494);
     }
-
     .sip-entry {
       margin-bottom: 15px;
       padding: 15px;
@@ -76,7 +71,6 @@
       border-radius: 8px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
-
     #result-area {
       width: 100%;
       max-width: 800px;
@@ -86,14 +80,12 @@
       border-radius: 10px;
       box-shadow: 0 3px 10px rgba(0,0,0,0.1);
     }
-
     #results {
       text-align: left;
       margin-top: 20px;
       font-size: 16px;
       color: #2c3e50;
     }
-
     canvas {
       margin-top: 30px;
       background: #fff;
@@ -101,19 +93,16 @@
       border-radius: 10px;
       box-shadow: 0 3px 10px rgba(0,0,0,0.1);
     }
-
     @media (max-width: 600px) {
       label, input {
         width: 100%;
         display: block;
         margin: 10px 0;
       }
-
       button {
         width: 100%;
         margin: 10px 0;
       }
-
       .sip-entry {
         padding: 10px;
       }
@@ -140,149 +129,295 @@
     <div id="sipContainer"></div>
     <button onclick="addSIPEntry()">Add SIP Entry</button>
     <button onclick="calculateSIP()">Calculate</button>
+    <button onclick="downloadPDF()">Download PDF</button>
+
   </div>
+<div id="sipSelector" style="margin-top: 40px;"></div>
 
   <div id="result-area">
     <div id="results"></div>
-    <canvas id="corpusChart" width="600" height="300"></canvas>
+   
+      <h3> CORPUS OVER YEARS</h3>
+ <canvas id="corpusChart" width="600" height="300"></canvas>
   </div>
 
   <script>
-    let sipEntries = [];
-    let chartInstance = null;
+  let sipEntries = [];
+  let chartInstance = null;
+  let sipChartInstance = null;
 
-    function addSIPEntry() {
-      const container = document.getElementById('sipContainer');
+  function addSIPEntry() {
+    const container = document.getElementById('sipContainer');
 
-      const div = document.createElement('div');
-      div.classList.add('sip-entry');
+    const div = document.createElement('div');
+    div.classList.add('sip-entry');
 
-      div.innerHTML = `
-        <label>SIP Amount (monthly):</label>
-        <input type="number" class="sip-amount"><br>
-        <label>Start Age:</label>
-        <input type="number" class="sip-start"><br>
-        <label>End Age:</label>
-        <input type="number" class="sip-end"><br>
-        <label>Expected Annual Return (%):</label>
-        <input type="number" class="sip-rate" step="0.01"><br>
-      `;
+    const index = sipEntries.length;
 
-      container.appendChild(div);
+    div.innerHTML = `
+      <label>SIP Name:</label>
+      <input type="text" class="sip-name" placeholder="Eg: Child Education SIP"><br>
+      <label>SIP Amount (monthly):</label>
+      <input type="number" class="sip-amount"><br>
+      <label>Start Age:</label>
+      <input type="number" class="sip-start"><br>
+      <label>End Age:</label>
+      <input type="number" class="sip-end"><br>
+      <label>Expected Annual Return (%):</label>
+      <input type="number" class="sip-rate" step="0.01"><br>
+    `;
 
-      sipEntries.push({
-        amount: div.querySelector('.sip-amount'),
-        startAge: div.querySelector('.sip-start'),
-        endAge: div.querySelector('.sip-end'),
-        rate: div.querySelector('.sip-rate')
-      });
+    container.appendChild(div);
+
+    sipEntries.push({
+      name: div.querySelector('.sip-name'),
+      amount: div.querySelector('.sip-amount'),
+      startAge: div.querySelector('.sip-start'),
+      endAge: div.querySelector('.sip-end'),
+      rate: div.querySelector('.sip-rate'),
+      value: 0,
+      corpusPerYear: []
+    });
+  }
+
+  function calculateSIP() {
+    const currentAge = parseInt(document.getElementById('currentAge').value);
+    const targetAge = parseInt(document.getElementById('targetAge').value);
+    const swpStartAge = parseInt(document.getElementById('swpStartAge').value) || null;
+    const swpAmount = parseInt(document.getElementById('swpAmount').value) || 0;
+    const results = document.getElementById('results');
+    results.innerHTML = '';
+
+    if (isNaN(currentAge) || isNaN(targetAge)) {
+      results.innerText = "Please enter valid numeric values.";
+      return;
     }
 
-    function calculateSIP() {
-      const currentAge = parseInt(document.getElementById('currentAge').value);
-      const targetAge = parseInt(document.getElementById('targetAge').value);
-      const swpStartAge = parseInt(document.getElementById('swpStartAge').value) || null;
-      const swpAmount = parseInt(document.getElementById('swpAmount').value) || 0;
-      const results = document.getElementById('results');
-      results.innerHTML = '';
+    const labels = [];
+    const totalCorpusData = [];
 
-      if (isNaN(currentAge) || isNaN(targetAge)) {
-        results.innerText = "Please enter valid numeric values.";
-        return;
-      }
+    for (let entry of sipEntries) {
+      entry.value = 0;
+      entry.corpusPerYear = [];
+    }
 
-      let corpus = 0;
-      let lastRate = 0;
-      const labels = [];
-      const data = [];
+    for (let age = currentAge; age <= targetAge; age++) {
+      let totalCorpus = 0;
 
-      for (let age = currentAge; age <= targetAge; age++) {
-        let sipContrib = 0;
-        let anyActive = false;
-        let monthlyRate = 0;
-
-        for (let entry of sipEntries) {
-          const amount = parseInt(entry.amount.value);
-          const start = parseInt(entry.startAge.value);
-          const end = parseInt(entry.endAge.value);
-          const rate = parseFloat(entry.rate.value) / 100;
-
-          if (start <= age && age <= end) {
-            sipContrib += amount;
-            monthlyRate = rate / 12;
-            lastRate = rate;
-            anyActive = true;
-          }
-        }
+      for (let entry of sipEntries) {
+        const amount = parseInt(entry.amount.value);
+        const start = parseInt(entry.startAge.value);
+        const end = parseInt(entry.endAge.value);
+        const rate = parseFloat(entry.rate.value) / 100;
+        const monthlyRate = rate / 12;
 
         for (let m = 0; m < 12; m++) {
-          if (anyActive) corpus += sipContrib;
-          corpus *= (1 + monthlyRate);
-        }
-
-        if (swpStartAge && age >= swpStartAge) {
-          for (let m = 0; m < 12; m++) {
-            if (corpus > swpAmount) corpus -= swpAmount;
-            else { corpus = 0; break; }
-            corpus *= (1 + lastRate / 12);
+          if (start <= age && age <= end) {
+            entry.value += amount;
           }
+          entry.value *= (1 + monthlyRate);
         }
 
-        if (!anyActive && corpus > 0) {
-          for (let m = 0; m < 12; m++) {
-            corpus *= (1 + lastRate / 12);
-          }
-        }
-
-        results.innerHTML += `<div>Age ${age}: ₹${corpus.toFixed(2)}</div>`;
-        labels.push(`Age ${age}`);
-        data.push(corpus.toFixed(2));
+        entry.corpusPerYear.push(entry.value);
+        totalCorpus += entry.value;
       }
 
-      renderChart(labels, data);
+      // SWP deduction after start age
+      if (swpStartAge && age >= swpStartAge) {
+        for (let m = 0; m < 12; m++) {
+          if (totalCorpus > swpAmount) {
+            totalCorpus -= swpAmount;
+          } else {
+            totalCorpus = 0;
+            break;
+          }
+        }
+      }
+
+      results.innerHTML += `<div><strong>Age ${age}</strong>: ₹${totalCorpus.toFixed(2)}</div>`;
+      labels.push(`Age ${age}`);
+      totalCorpusData.push(totalCorpus.toFixed(2));
     }
 
-    function renderChart(labels, data) {
-      const ctx = document.getElementById('corpusChart').getContext('2d');
-      if (chartInstance) chartInstance.destroy();
+    renderChart(labels, totalCorpusData);
+    populateSIPSelector(labels);
+  }
 
-      chartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'Corpus Over Time',
-            data: data,
-            borderColor: 'green',
-            backgroundColor: 'rgba(0, 128, 0, 0.1)',
-            tension: 0.3,
-            fill: true,
-            pointRadius: 3
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { display: true },
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  return `₹${parseFloat(context.raw).toLocaleString('en-IN')}`;
-                }
-              }
+  function renderChart(labels, data) {
+    const ctx = document.getElementById('corpusChart').getContext('2d');
+    if (chartInstance) chartInstance.destroy();
+
+    chartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Total Corpus Over Time',
+          data: data,
+          borderColor: 'green',
+          backgroundColor: 'rgba(0, 128, 0, 0.1)',
+          tension: 0.3,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: ctx => `₹${parseFloat(ctx.raw).toLocaleString('en-IN')}`
             }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                callback: value => `₹${value.toLocaleString('en-IN')}`
-              }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: value => `₹${value.toLocaleString('en-IN')}`
             }
           }
         }
-      });
+      }
+    });
+  }
+
+  function populateSIPSelector(labels) {
+    const selectorDiv = document.getElementById('sipSelector');
+    selectorDiv.innerHTML = `
+      <h3>Select a SIP to view its individual corpus growth</h3>
+      <select id="sipDropdown" onchange="showSIPChart(this.value)">
+        <option disabled selected>Select SIP</option>
+        ${sipEntries.map((entry, i) => `<option value="${i}">${entry.name.value || 'SIP #' + (i+1)}</option>`).join('')}
+      </select>
+      <canvas id="sipChart" width="600" height="300"></canvas>
+    `;
+  }
+
+  function showSIPChart(index) {
+    index = parseInt(index);
+    const selected = sipEntries[index];
+    const ctx = document.getElementById('sipChart').getContext('2d');
+
+    if (sipChartInstance) sipChartInstance.destroy();
+
+    sipChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: selected.corpusPerYear.map((_, i) => `Age ${parseInt(document.getElementById('currentAge').value) + i}`),
+        datasets: [{
+          label: selected.name.value || `SIP #${index+1}`,
+          data: selected.corpusPerYear.map(v => v.toFixed(2)),
+          borderColor: 'blue',
+          backgroundColor: 'rgba(0, 0, 255, 0.1)',
+          tension: 0.3,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: ctx => `₹${parseFloat(ctx.raw).toLocaleString('en-IN')}`
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: value => `₹${value.toLocaleString('en-IN')}`
+            }
+          }
+        }
+      }
+    });
+  }
+
+async function downloadPDF() {
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p', 'mm', 'a4');
+  const margin = 10;
+  let y = margin;
+
+  // Title
+  pdf.setFontSize(18);
+  pdf.text("SIP Projection Results", margin, y);
+  y += 10;
+
+  // 1. Add Year-wise Corpus Report
+  const resultsElement = document.getElementById("results");
+  const resultText = resultsElement?.innerText || "No results available.";
+  const lines = pdf.splitTextToSize(resultText, 190);
+  pdf.setFontSize(12);
+  pdf.text(lines, margin, y);
+  y += lines.length * 7 + 10;
+
+  // 2. Add Total Corpus Chart
+  const corpusCanvas = document.getElementById("corpusChart");
+  if (corpusCanvas) {
+    const corpusImgData = corpusCanvas.toDataURL("image/png");
+    pdf.addPage();
+    pdf.setFontSize(16);
+    pdf.text("Total Corpus Chart", margin, margin);
+    pdf.addImage(corpusImgData, 'PNG', margin, margin + 5, 180, 90);
+  }
+
+  // 3. Add All SIP Charts
+  for (let i = 0; i < sipEntries.length; i++) {
+    await renderSIPChartForPDF(i); // Ensure chart is created
+
+    const sipCanvas = document.getElementById('sipChart');
+    if (sipCanvas) {
+      const sipImgData = sipCanvas.toDataURL('image/png');
+      pdf.addPage();
+      pdf.setFontSize(16);
+      pdf.text(sipEntries[i].name.value || `SIP #${i + 1}`, margin, margin);
+      pdf.addImage(sipImgData, 'PNG', margin, margin + 5, 180, 90);
     }
-  </script>
+  }
+
+  pdf.save("SIP_Report.pdf");
+}
+
+async function renderSIPChartForPDF(index) {
+  const ctx = document.getElementById('sipChart').getContext('2d');
+  if (sipChartInstance) sipChartInstance.destroy();
+
+  sipChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: chartInstance.data.labels,
+      datasets: [{
+        label: sipEntries[index].name.value || `SIP #${index + 1}`,
+        data: sipEntries[index].corpusPerYear,
+        borderColor: 'blue',
+        backgroundColor: 'rgba(0, 0, 255, 0.1)',
+        tension: 0.3,
+        fill: true
+      }]
+    },
+    options: {
+      animation: false,
+      responsive: false,
+      plugins: {
+        tooltip: {
+          enabled: false
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+
+  // Wait a short moment to ensure canvas is rendered
+  return new Promise(resolve => setTimeout(resolve, 300));
+}
+
+</script>
+
 </body>
 </html>

@@ -377,35 +377,13 @@ async function downloadPDF() {
     }
   }
 
-  // Create a data URL from the generated PDF and simulate a download
-  const pdfDataUrl = pdf.output('datauristring');
-
-  // Create a temporary link element
-  const link = document.createElement('a');
-  link.href = pdfDataUrl;
-  link.download = "SIP_Report.pdf"; // Set the name for the downloaded file
-
-  // Append the link to the body (it's invisible)
-  document.body.appendChild(link);
-
-  // Simulate a click on the link to trigger the download
-  link.click();
-
-  // Remove the link from the DOM after the download is triggered
-  document.body.removeChild(link);
-  
-  / Generate the PDF and create blob URL
+  // Generate the PDF and create blob URL (BETTER APPROACH FOR KODULAR)
   const pdfBlob = pdf.output('blob');
   const blobUrl = URL.createObjectURL(pdfBlob);
   
   // Check if running in Kodular (Android WebView)
   if (typeof Android !== 'undefined') {
-    // Create a temporary download link
-    const link = document.createElement('a');
-    link.href = blobUrl;
-    link.download = "SIP_Report.pdf";
-    
-    // Extract the filename and URL to send to Android
+    // Prepare download info for Android
     const downloadInfo = {
       url: blobUrl,
       filename: "SIP_Report.pdf"
@@ -414,7 +392,7 @@ async function downloadPDF() {
     // Send to Kodular
     Android.receiveDownloadInfo(JSON.stringify(downloadInfo));
     
-    // Clean up later
+    // Clean up later (10 seconds should be enough for download to start)
     setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
   } else {
     // Standard browser download
@@ -426,7 +404,6 @@ async function downloadPDF() {
     document.body.removeChild(link);
     setTimeout(() => URL.revokeObjectURL(blobUrl), 100);
   }
-}
 }
 
 

@@ -378,11 +378,10 @@ async function downloadPDF() {
     }
 
     // Instead of calling pdf.save(), trigger the download within the WebViewer.
-    const pdfOutput = pdf.output('blob');
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(pdfOutput);
-    link.download = "SIP_Report.pdf";
-    link.click();
+    const blob = pdf.output("blob");
+const url = URL.createObjectURL(blob);
+window.WebViewString = url;  // Send to Kodular
+
 }
 
 async function renderSIPChartForPDF(index) {

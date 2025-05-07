@@ -93,6 +93,40 @@
       border-radius: 10px;
       box-shadow: 0 3px 10px rgba(0,0,0,0.1);
     }
+    
+    /* New styles for menu system */
+    .menu-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 30px;
+      width: 100%;
+    }
+    .menu-buttons {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+    .menu-buttons button {
+      margin: 0;
+    }
+    .section {
+      display: none;
+      width: 100%;
+      max-width: 800px;
+    }
+    .active {
+      display: block;
+    }
+    #privacy-policy, #user-manual {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+      text-align: left;
+      margin-top: 20px;
+    }
+    
     @media (max-width: 600px) {
       label, input {
         width: 100%;
@@ -106,44 +140,114 @@
       .sip-entry {
         padding: 10px;
       }
+      .menu-buttons {
+        flex-direction: column;
+        width: 100%;
+      }
     }
   </style>
 </head>
 <body align="center">
   <h2>SIP REFINE</h2>
+  
+  <div class="menu-container">
+    <div class="menu-buttons">
+      <button onclick="showSection('calculator')">Calculator</button>
+      <button onclick="showSection('privacy-policy')">Privacy Policy</button>
+      <button onclick="showSection('user-manual')">User Manual</button>
+    </div>
+    
+    <!-- Calculator Section -->
+    <div id="calculator" class="section active">
+      <div>
+        <label>Current Age:</label>
+        <input type="number" id="currentAge" min="0"><br>
 
-  <div>
-    <label>Current Age:</label>
-    <input type="number" id="currentAge" min="0"><br>
+        <label>Target Age (to hold corpus):</label>
+        <input type="number" id="targetAge" min="0"><br>
 
-    <label>Target Age (to hold corpus):</label>
-    <input type="number" id="targetAge" min="0"><br>
+        <label>SWP Start Age (optional):</label>
+        <input type="number" id="swpStartAge" min="0"><br>
 
-    <label>SWP Start Age (optional):</label>
-    <input type="number" id="swpStartAge" min="0"><br>
+        <label>SWP Monthly Amount (optional):</label>
+        <input type="number" id="swpAmount" min="0"><br>
 
-    <label>SWP Monthly Amount (optional):</label>
-    <input type="number" id="swpAmount" min="0"><br>
+        <h3>SIP Entries</h3>
+        <div id="sipContainer"></div>
+        <button onclick="addSIPEntry()">Add SIP Entry</button>
+        <button onclick="calculateSIP()">Calculate</button>
+      </div>
+      
+      <div id="sipSelector" style="margin-top: 40px;"></div>
 
-    <h3>SIP Entries</h3>
-    <div id="sipContainer"></div>
-    <button onclick="addSIPEntry()">Add SIP Entry</button>
-    <button onclick="calculateSIP()">Calculate</button>
-   
-  </div>
-<div id="sipSelector" style="margin-top: 40px;"></div>
-
-  <div id="result-area">
-    <div id="results"></div>
-   
-      <h3> CORPUS OVER YEARS</h3>
- <canvas id="corpusChart" width="600" height="300"></canvas>
+      <div id="result-area">
+        <div id="results"></div>
+       
+          <h3> CORPUS OVER YEARS</h3>
+       <canvas id="corpusChart" width="600" height="300"></canvas>
+      </div>
+    </div>
+    
+    <!-- Privacy Policy Section -->
+    <div id="privacy-policy" class="section">
+      <h3>Privacy Policy</h3>
+      <p>Last updated: May 2024</p>
+      
+      <h4>Information We Collect</h4>
+      <p>This application does not collect, store, or transmit any personal data. All calculations are performed locally in your browser.</p>
+      
+      <h4>Data Security</h4>
+      <p>Since no data leaves your device, your information remains secure and private.</p>
+      
+      <h4>Cookies</h4>
+      <p>This application does not use cookies or any tracking technologies.</p>
+      
+      <h4>Changes to This Policy</h4>
+      <p>We may update our Privacy Policy from time to time. Any changes will be posted on this page.</p>
+    </div>
+    
+    <!-- User Manual Section -->
+    <div id="user-manual" class="section">
+      <h3>User Manual</h3>
+      
+      <h4>Getting Started</h4>
+      <p>1. Enter your current age and target age (when you want to access your corpus).</p>
+      <p>2. Optionally enter SWP (Systematic Withdrawal Plan) details if you plan to withdraw money.</p>
+      
+      <h4>Adding SIP Entries</h4>
+      <p>1. Click "Add SIP Entry" to add each investment plan.</p>
+      <p>2. For each SIP, provide:
+        <ul>
+          <li>A name for identification</li>
+          <li>Monthly investment amount</li>
+          <li>Start and end age for the SIP</li>
+          <li>Expected annual return rate</li>
+        </ul>
+      </p>
+      
+      <h4>Calculating Results</h4>
+      <p>1. Click "Calculate" to see your projected corpus growth.</p>
+      <p>2. The chart shows your total corpus over time.</p>
+      <p>3. Use the dropdown to view individual SIP performance.</p>
+      
+      <h4>Tips</h4>
+      <p>- You can model multiple SIPs with different durations and returns.</p>
+      <p>- The SWP feature helps you see how withdrawals affect your corpus.</p>
+    </div>
   </div>
 
   <script>
   let sipEntries = [];
   let chartInstance = null;
   let sipChartInstance = null;
+
+  // Show the selected section and hide others
+  function showSection(sectionId) {
+    document.querySelectorAll('.section').forEach(section => {
+      section.classList.remove('active');
+    });
+    document.getElementById(sectionId).classList.add('active');
+  }
 
   function addSIPEntry() {
     const container = document.getElementById('sipContainer');
@@ -332,9 +436,7 @@
       }
     });
   }
-
-
-</script>
+  </script>
 
 </body>
 </html>

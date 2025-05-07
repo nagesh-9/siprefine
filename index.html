@@ -335,62 +335,54 @@
   }
 
 async function downloadPDF() {
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF('p', 'mm', 'a4');
-  const margin = 10;
-  let y = margin;
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const margin = 10;
+    let y = margin;
 
-  // Title
-  pdf.setFontSize(18);
-  pdf.text("SIP Projection Results", margin, y);
-  y += 10;
+    // Title
+    pdf.setFontSize(18);
+    pdf.text("SIP Projection Results", margin, y);
+    y += 10;
 
-  // 1. Add Year-wise Corpus Report
-  const resultsElement = document.getElementById("results");
-  const resultText = resultsElement?.innerText || "No results available.";
-  const lines = pdf.splitTextToSize(resultText, 190);
-  pdf.setFontSize(12);
-  pdf.text(lines, margin, y);
-  y += lines.length * 7 + 10;
+    // 1. Add Year-wise Corpus Report
+    const resultsElement = document.getElementById("results");
+    const resultText = resultsElement?.innerText || "No results available.";
+    const lines = pdf.splitTextToSize(resultText, 190);
+    pdf.setFontSize(12);
+    pdf.text(lines, margin, y);
+    y += lines.length * 7 + 10;
 
-  // 2. Add Total Corpus Chart
-  const corpusCanvas = document.getElementById("corpusChart");
-  if (corpusCanvas) {
-    const corpusImgData = corpusCanvas.toDataURL("image/png");
-    pdf.addPage();
-    pdf.setFontSize(16);
-    pdf.text("Total Corpus Chart", margin, margin);
-    pdf.addImage(corpusImgData, 'PNG', margin, margin + 5, 180, 90);
-  }
-
-  // 3. Add All SIP Charts
-  for (let i = 0; i < sipEntries.length; i++) {
-    await renderSIPChartForPDF(i); // Ensure chart is created
-
-    const sipCanvas = document.getElementById('sipChart');
-    if (sipCanvas) {
-      const sipImgData = sipCanvas.toDataURL('image/png');
-      pdf.addPage();
-      pdf.setFontSize(16);
-      pdf.text(sipEntries[i].name.value || `SIP #${i + 1}`, margin, margin);
-      pdf.addImage(sipImgData, 'PNG', margin, margin + 5, 180, 90);
+    // 2. Add Total Corpus Chart
+    const corpusCanvas = document.getElementById("corpusChart");
+    if (corpusCanvas) {
+        const corpusImgData = corpusCanvas.toDataURL("image/png");
+        pdf.addPage();
+        pdf.setFontSize(16);
+        pdf.text("Total Corpus Chart", margin, margin);
+        pdf.addImage(corpusImgData, 'PNG', margin, margin + 5, 180, 90);
     }
-  }
 
-  // Convert PDF to Blob
-  const blob = pdf.output("blob");
+    // 3. Add All SIP Charts
+    for (let i = 0; i < sipEntries.length; i++) {
+        await renderSIPChartForPDF(i); // Ensure chart is created
 
-  // Convert Blob to Base64 and send to Kodular
-  const reader = new FileReader();
-  reader.onloadend = function () {
-    const base64String = reader.result.split(',')[1]; // Remove data URI prefix
-    if (window.AndroidInterface && typeof window.AndroidInterface.savePDF === 'function') {
-      window.AndroidInterface.savePDF(base64String);
-    } else {
-      alert("Android interface not available");
+        const sipCanvas = document.getElementById('sipChart');
+        if (sipCanvas) {
+            const sipImgData = sipCanvas.toDataURL('image/png');
+            pdf.addPage();
+            pdf.setFontSize(16);
+            pdf.text(sipEntries[i].name.value || `SIP #${i + 1}`, margin, margin);
+            pdf.addImage(sipImgData, 'PNG', margin, margin + 5, 180, 90);
+        }
     }
-  };
-  reader.readAsDataURL(blob);
+
+    // Instead of calling pdf.save(), trigger the download within the WebViewer.
+    const pdfOutput = pdf.output('blob');
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(pdfOutput);
+    link.download = "SIP_Report.pdf";
+    link.click();
 }
 
 async function renderSIPChartForPDF(index) {

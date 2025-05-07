@@ -377,7 +377,20 @@ async function downloadPDF() {
     }
   }
 
-  pdf.save("SIP_Report.pdf");
+  // Convert PDF to Blob
+  const blob = pdf.output("blob");
+
+  // Convert Blob to Base64 and send to Kodular
+  const reader = new FileReader();
+  reader.onloadend = function () {
+    const base64String = reader.result.split(',')[1]; // Remove data URI prefix
+    if (window.AndroidInterface && typeof window.AndroidInterface.savePDF === 'function') {
+      window.AndroidInterface.savePDF(base64String);
+    } else {
+      alert("Android interface not available");
+    }
+  };
+  reader.readAsDataURL(blob);
 }
 
 async function renderSIPChartForPDF(index) {

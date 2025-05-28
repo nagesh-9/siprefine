@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=0.7">
     <title>SIP REFINE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -207,10 +207,13 @@
             clickedButton.classList.remove('bg-gray-300', 'text-gray-800');
             clickedButton.classList.add('bg-blue-600', 'text-white');
 
-            // If switching away from calculator, hide results area
+            // --- NEW: Hide result area if not on the calculator section ---
+            const resultArea = document.getElementById('result-area');
             if (sectionId !== 'calculator') {
-                document.getElementById('result-area').classList.add('hidden');
+                resultArea.classList.add('hidden');
+                resultArea.style.display = 'none'; // Ensure it's hidden
             }
+            // --- END NEW ---
         }
 
         // Function to add a new SIP input entry

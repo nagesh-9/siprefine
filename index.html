@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SIP REFINE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -73,14 +73,18 @@
         <div id="result-area" class="section w-full max-w-4xl bg-white p-6 sm:p-8 rounded-xl shadow-custom mt-8 hidden">
             <h3 class="text-2xl font-bold text-gray-700 mb-4">Corpus Over Years</h3>
             <div id="results" class="text-left text-lg text-gray-700 mb-6 max-h-60 overflow-y-auto p-2 border border-gray-200 rounded-lg bg-gray-50"></div>
-            <canvas id="corpusChart" class="w-full h-auto max-h-96 bg-gray-50 rounded-lg border border-gray-200 p-2"></canvas>
+            <div class="overflow-x-auto pb-4">
+                <canvas id="corpusChart" class="h-96 bg-gray-50 rounded-lg border border-gray-200 p-2"></canvas>
+            </div>
 
             <div id="sipSelector" class="mt-8">
                 <h3 class="text-2xl font-bold text-gray-700 mb-4">Individual SIP Corpus Growth</h3>
                 <select id="sipDropdown" onchange="showSIPChart(this.value)" class="w-full md:w-1/2 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 mb-6">
                     <option disabled selected>Select a SIP to view its individual corpus growth</option>
                 </select>
-                <canvas id="sipChart" class="w-full h-auto max-h-96 bg-gray-50 rounded-lg border border-gray-200 p-2"></canvas>
+                <div class="overflow-x-auto pb-4">
+                    <canvas id="sipChart" class="h-96 bg-gray-50 rounded-lg border border-gray-200 p-2"></canvas>
+                </div>
             </div>
         </div>
 
@@ -125,7 +129,7 @@
                 <li>Use the delete button to remove an individual SIP entry.</li>
             </ul>
 
-            <h4 class="text-xl font-semibold text-gray-700 mt-6 mb-2">Adding SWP Entries</h4>
+            <h4 class="text-xl font-semibold text-gray-700 mt-6 mb-2">Adding SWP Entries</li>
             <ul class="list-disc list-inside text-gray-600 leading-relaxed space-y-1">
                 <li>Click "Add SWP Entry" to add each withdrawal plan.</li>
                 <li>For each SWP, provide:
@@ -207,13 +211,12 @@
             clickedButton.classList.remove('bg-gray-300', 'text-gray-800');
             clickedButton.classList.add('bg-blue-600', 'text-white');
 
-            // --- NEW: Hide result area if not on the calculator section ---
+            // Hide result area if not on the calculator section
             const resultArea = document.getElementById('result-area');
             if (sectionId !== 'calculator') {
                 resultArea.classList.add('hidden');
                 resultArea.style.display = 'none'; // Ensure it's hidden
             }
-            // --- END NEW ---
         }
 
         // Function to add a new SIP input entry
@@ -343,14 +346,12 @@
 
         // Main calculation function
         function calculateSIP() {
-            console.log("Calculate button clicked!"); // New log for immediate feedback
-            showMessage("Attempting calculation...", "success"); // New message for immediate feedback
+            console.log("Calculate button clicked!");
+            showMessage("Attempting calculation...", "success");
 
             try {
                 const currentAge = parseInt(document.getElementById('currentAge').value);
                 const targetAge = parseInt(document.getElementById('targetAge').value);
-                const resultsDiv = document.getElementById('results');
-                resultsDiv.innerHTML = ''; // Clear previous results
 
                 // --- Input Validation ---
                 console.log("Starting input validation.");
@@ -375,7 +376,6 @@
                 }
                 for (let i = 0; i < sipEntries.length; i++) {
                     const entry = sipEntries[i];
-                    // Add a check for null/undefined input elements
                     if (!entry || !entry.amountInput || !entry.startAgeInput || !entry.endAgeInput || !entry.rateInput) {
                         showMessage(`Error: SIP entry #${i + 1} has missing input elements. Please refresh or check the entry.`);
                         console.error(`Missing input elements for SIP entry #${i + 1}`, entry);
@@ -418,7 +418,6 @@
                 console.log(`Validating ${swpEntries.length} SWP entries.`);
                 for (let i = 0; i < swpEntries.length; i++) {
                     const entry = swpEntries[i];
-                    // Add a check for null/undefined input elements
                     if (!entry || !entry.amountInput || !entry.startAgeInput || !entry.endAgeInput) {
                         showMessage(`Error: SWP entry #${i + 1} has missing input elements. Please refresh or check the entry.`);
                         console.error(`Missing input elements for SWP entry #${i + 1}`, entry);
@@ -462,6 +461,28 @@
                     entry.currentAccumulatedValue = 0; // This will carry over year-to-year
                     entry.corpusPerYear = []; // Reset for new calculation
                 });
+
+                // Get resultArea reference
+                const resultArea = document.getElementById('result-area');
+                // Get resultsDiv reference directly here
+                const resultsDiv = document.getElementById('results');
+
+                // Crucial check: If resultsDiv is null, something is fundamentally wrong with the HTML structure
+                if (!resultsDiv) {
+                    console.error("Critical Error: 'results' element not found in the DOM during calculateSIP execution.");
+                    showMessage("Error: Results display area not found. Please refresh the page or contact support.", "error");
+                    return;
+                }
+                console.log("'resultsDiv' element found:", resultsDiv);
+
+
+                // Show result area BEFORE clearing innerHTML of its children
+                resultArea.classList.remove('hidden');
+                resultArea.style.display = 'block'; // Ensure it's block
+                console.log("Result area made visible. ClassList:", resultArea.classList.value, "Display:", resultArea.style.display);
+
+                resultsDiv.innerHTML = ''; // Clear previous results after making parent visible
+                console.log("resultsDiv innerHTML cleared.");
 
                 // Loop through each year from currentAge to targetAge
                 console.log(`Calculating corpus from age ${currentAge} to ${targetAge}.`);
@@ -514,8 +535,8 @@
                     });
 
                     labels.push(`Age ${age}`);
-                    totalCorpusData.push(currentYearTotalCorpus); // Store raw number for chart
                     resultsDiv.innerHTML += `<div class="py-1 border-b border-gray-100 last:border-b-0"><strong>Age ${age}</strong>: ₹${currentYearTotalCorpus.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>`;
+                    totalCorpusData.push(currentYearTotalCorpus); // Store raw number for chart
                 }
 
                 // Render the main total corpus chart
@@ -525,12 +546,6 @@
                 // Populate the dropdown for individual SIP charts
                 populateSIPSelector(labels);
 
-                // Show the result area after successful calculation
-                const resultArea = document.getElementById('result-area');
-                console.log("Before showing result area - classList:", resultArea.classList.value, "display:", resultArea.style.display);
-                resultArea.classList.remove('hidden');
-                resultArea.style.display = 'block'; // Ensure it's block
-                console.log("After showing result area - classList:", resultArea.classList.value, "display:", resultArea.style.display);
 
                 showMessage("Calculation complete!", "success"); // Success message
                 console.log("calculateSIP finished successfully.");
@@ -550,6 +565,16 @@
             }
             console.log("Got 2D context for corpusChart:", ctx);
 
+            // Calculate dynamic width based on number of years
+            const pixelsPerYear = 50; // Adjust this value as needed for point density
+            const minChartWidth = labels.length * pixelsPerYear;
+            const parentContainerWidth = ctx.canvas.parentNode.clientWidth; // Get actual width of the scrollable div
+            const finalChartWidth = Math.max(minChartWidth, parentContainerWidth); // Chart should be at least as wide as its container, or wider if needed
+
+            // Set canvas dimensions directly
+            ctx.canvas.style.width = `${finalChartWidth}px`;
+            ctx.canvas.style.height = '384px'; // h-96 in Tailwind is 384px
+
             if (chartInstance) chartInstance.destroy(); // Destroy previous chart instance if exists
 
             chartInstance = new Chart(ctx, {
@@ -568,8 +593,8 @@
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false, // Allow canvas to resize freely
+                    responsive: true, // Chart.js will respond to the canvas element's size
+                    maintainAspectRatio: false, // Crucial for custom width/height
                     plugins: {
                         tooltip: {
                             callbacks: {
@@ -643,7 +668,7 @@
             if (!document.getElementById('sipChart')) {
                 const canvas = document.createElement('canvas');
                 canvas.id = 'sipChart';
-                canvas.classList.add('w-full', 'h-auto', 'max-h-96', 'bg-gray-50', 'rounded-lg', 'border', 'border-gray-200', 'p-2');
+                canvas.classList.add('h-96', 'bg-gray-50', 'rounded-lg', 'border', 'border-gray-200', 'p-2'); // Removed w-full here
                 selectorDiv.appendChild(canvas);
             }
             // Reset individual chart if it exists
@@ -669,10 +694,19 @@
             }
             console.log("Got 2D context for sipChart:", ctx);
 
-            if (sipChartInstance) sipChartInstance.destroy(); // Destroy previous chart instance
-
+            // Calculate dynamic width based on number of years
             const currentAge = parseInt(document.getElementById('currentAge').value);
             const labels = selected.corpusPerYear.map((_, i) => `Age ${currentAge + i}`);
+            const pixelsPerYear = 50; // Adjust this value as needed
+            const minChartWidth = labels.length * pixelsPerYear;
+            const parentContainerWidth = ctx.canvas.parentNode.clientWidth; // Get actual width of the scrollable div
+            const finalChartWidth = Math.max(minChartWidth, parentContainerWidth);
+
+            // Set canvas dimensions directly
+            ctx.canvas.style.width = `${finalChartWidth}px`;
+            ctx.canvas.style.height = '384px'; // h-96 in Tailwind is 384px
+
+            if (sipChartInstance) sipChartInstance.destroy(); // Destroy previous chart instance
 
             sipChartInstance = new Chart(ctx, {
                 type: 'line',

@@ -1,442 +1,805 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>SIP REFINE</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #eef2f5;
-      color: #333;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-    }
-    h2 {
-      margin-top: 40px;
-      color: #2c3e50;
-      font-size: 32px;
-      letter-spacing: 1px;
-    }
-    h3 {
-      color: #34495e;
-      margin-bottom: 10px;
-      font-size: 22px;
-    }
-    label {
-      display: inline-block;
-      width: 220px;
-      margin-top: 10px;
-      font-weight: 500;
-      color: #2d3436;
-    }
-    input {
-      padding: 8px 10px;
-      width: 200px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      outline: none;
-      transition: border 0.3s;
-    }
-    input:focus {
-      border-color: #007bff;
-      box-shadow: 0 0 5px rgba(0,123,255,0.4);
-    }
-    button {
-      margin: 15px 8px;
-      padding: 10px 20px;
-      background: linear-gradient(145deg, #007bff, #0056b3);
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: background 0.3s;
-    }
-    button:hover {
-      background: linear-gradient(145deg, #0056b3, #004494);
-    }
-    .sip-entry {
-      margin-bottom: 15px;
-      padding: 15px;
-      background: #ffffff;
-      border: 1px solid #dfe6e9;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    }
-    #result-area {
-      width: 100%;
-      max-width: 800px;
-      margin-top: 30px;
-      padding: 20px;
-      background: #ffffff;
-      border-radius: 10px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-    }
-    #results {
-      text-align: left;
-      margin-top: 20px;
-      font-size: 16px;
-      color: #2c3e50;
-    }
-    canvas {
-      margin-top: 30px;
-      background: #fff;
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-    }
-    
-    /* New styles for menu system */
-    .menu-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-top: 30px;
-      width: 100%;
-    }
-    .menu-buttons {
-      display: flex;
-      gap: 15px;
-      margin-bottom: 30px;
-    }
-    .menu-buttons button {
-      margin: 0;
-    }
-    .section {
-      display: none;
-      width: 100%;
-      max-width: 800px;
-    }
-    .active {
-      display: block;
-    }
-    #privacy-policy, #user-manual {
-      background: #ffffff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-      text-align: left;
-      margin-top: 20px;
-    }
-    
-    @media (max-width: 600px) {
-      label, input {
-        width: 100%;
-        display: block;
-        margin: 10px 0;
-      }
-      button {
-        width: 100%;
-        margin: 10px 0;
-      }
-      .sip-entry {
-        padding: 10px;
-      }
-      .menu-buttons {
-        flex-direction: column;
-        width: 100%;
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIP REFINE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom styles for rounded corners and shadows where Tailwind might not be enough or for specific overrides */
+        .shadow-custom {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        .section {
+            display: none; /* Hidden by default */
+        }
+        .active {
+            display: block; /* Shown when active */
+        }
+        /* Hide scrollbar for number inputs on Firefox */
+        input[type='number'] {
+            -moz-appearance: textfield;
+        }
+        /* Hide scrollbar for number inputs on Chrome, Safari, Edge */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    </style>
 </head>
-<body align="center">
-  <h2>SIP REFINE</h2>
-  
-  <div class="menu-container">
-    <div class="menu-buttons">
-      <button onclick="showSection('calculator')">Calculator</button>
-      <button onclick="showSection('privacy-policy')">Privacy Policy</button>
-      <button onclick="showSection('user-manual')">User Manual</button>
+<body class="bg-gray-100 text-gray-800 flex flex-col items-center min-h-screen p-4 sm:p-6 lg:p-8">
+
+    <h1 class="text-4xl sm:text-5xl font-extrabold text-blue-700 mt-8 mb-6 tracking-wide">SIP REFINE</h1>
+
+    <div class="menu-container w-full max-w-4xl flex flex-col items-center mb-8">
+        <div class="menu-buttons flex flex-wrap justify-center gap-4 mb-8">
+            <button id="calculator-btn" onclick="showSection('calculator', this)" class="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-300 active-menu-btn">Calculator</button>
+            <button id="privacy-btn" onclick="showSection('privacy-policy', this)" class="px-6 py-3 bg-gray-300 text-gray-800 font-semibold rounded-lg shadow-md hover:bg-gray-400 transition-colors duration-300">Privacy Policy</button>
+            <button id="manual-btn" onclick="showSection('user-manual', this)" class="px-6 py-3 bg-gray-300 text-gray-800 font-semibold rounded-lg shadow-md hover:bg-gray-400 transition-colors duration-300">User Manual</button>
+        </div>
+
+        <div id="calculator" class="section active w-full bg-white p-6 sm:p-8 rounded-xl shadow-custom mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 mb-6">
+                <div>
+                    <label for="currentAge" class="block text-lg font-medium text-gray-700 mb-1">Current Age:</label>
+                    <input type="number" id="currentAge" min="0" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                </div>
+                <div>
+                    <label for="targetAge" class="block text-lg font-medium text-gray-700 mb-1">Target Age (to hold corpus):</label>
+                    <input type="number" id="targetAge" min="0" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all duration-200">
+                </div>
+            </div>
+
+            <h3 class="text-2xl font-bold text-gray-700 mt-8 mb-4">SIP Entries</h3>
+            <div id="sipContainer" class="space-y-4 mb-6"></div>
+            <button onclick="addSIPEntry()" class="px-5 py-2 bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-600 transition-colors duration-300 mr-2">Add SIP Entry</button>
+
+            <h3 class="text-2xl font-bold text-gray-700 mt-8 mb-4">SWP Entries (Optional)</h3>
+            <div id="swpContainer" class="space-y-4 mb-6"></div>
+            <button onclick="addSWPEntry()" class="px-5 py-2 bg-purple-500 text-white font-semibold rounded-lg shadow-md hover:bg-purple-600 transition-colors duration-300 mr-2">Add SWP Entry</button>
+
+            <div class="flex flex-wrap justify-center gap-4 mt-8">
+                <button onclick="calculateSIP()" class="px-8 py-3 bg-blue-600 text-white font-extrabold rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-300 transform hover:scale-105">Calculate</button>
+                <button onclick="resetAll()" class="px-8 py-3 bg-red-500 text-white font-extrabold rounded-lg shadow-lg hover:bg-red-600 transition-all duration-300 transform hover:scale-105">Reset All</button>
+            </div>
+        </div>
+
+        <div id="result-area" class="section w-full max-w-4xl bg-white p-6 sm:p-8 rounded-xl shadow-custom mt-8 hidden">
+            <h3 class="text-2xl font-bold text-gray-700 mb-4">Corpus Over Years</h3>
+            <div id="results" class="text-left text-lg text-gray-700 mb-6 max-h-60 overflow-y-auto p-2 border border-gray-200 rounded-lg bg-gray-50"></div>
+            <canvas id="corpusChart" class="w-full h-auto max-h-96 bg-gray-50 rounded-lg border border-gray-200 p-2"></canvas>
+
+            <div id="sipSelector" class="mt-8">
+                <h3 class="text-2xl font-bold text-gray-700 mb-4">Individual SIP Corpus Growth</h3>
+                <select id="sipDropdown" onchange="showSIPChart(this.value)" class="w-full md:w-1/2 p-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 mb-6">
+                    <option disabled selected>Select a SIP to view its individual corpus growth</option>
+                </select>
+                <canvas id="sipChart" class="w-full h-auto max-h-96 bg-gray-50 rounded-lg border border-gray-200 p-2"></canvas>
+            </div>
+        </div>
+
+        <div id="privacy-policy" class="section w-full max-w-4xl bg-white p-6 sm:p-8 rounded-xl shadow-custom text-left">
+            <h3 class="text-3xl font-bold text-gray-700 mb-4">Privacy Policy</h3>
+            <p class="text-gray-600 mb-2">Last updated: May 2024</p>
+
+            <h4 class="text-xl font-semibold text-gray-700 mt-6 mb-2">Information We Collect</h4>
+            <p class="text-gray-600 leading-relaxed">This application does not collect, store, or transmit any personal data. All calculations are performed locally in your browser.</p>
+
+            <h4 class="text-xl font-semibold text-gray-700 mt-6 mb-2">Data Security</h4>
+            <p class="text-gray-600 leading-relaxed">Since no data leaves your device, your information remains secure and private.</p>
+
+            <h4 class="text-xl font-semibold text-gray-700 mt-6 mb-2">Cookies</h4>
+            <p class="text-gray-600 leading-relaxed">This application does not use cookies or any tracking technologies.</p>
+
+            <h4 class="text-xl font-semibold text-gray-700 mt-6 mb-2">Changes to This Policy</h4>
+            <p class="text-gray-600 leading-relaxed">We may update our Privacy Policy from time to time. Any changes will be posted on this page.</p>
+        </div>
+
+        <div id="user-manual" class="section w-full max-w-4xl bg-white p-6 sm:p-8 rounded-xl shadow-custom text-left">
+            <h3 class="text-3xl font-bold text-gray-700 mb-4">User Manual</h3>
+
+            <h4 class="text-xl font-semibold text-gray-700 mt-6 mb-2">Getting Started</h4>
+            <ul class="list-disc list-inside text-gray-600 leading-relaxed space-y-1">
+                <li>Enter your current age and target age (when you want to access your corpus).</li>
+                <li>Add SIP (Systematic Investment Plan) entries for your investments.</li>
+                <li>Optionally add SWP (Systematic Withdrawal Plan) entries if you plan to withdraw money from your corpus later.</li>
+            </ul>
+
+            <h4 class="text-xl font-semibold text-gray-700 mt-6 mb-2">Adding SIP Entries</h4>
+            <ul class="list-disc list-inside text-gray-600 leading-relaxed space-y-1">
+                <li>Click "Add SIP Entry" to add each investment plan.</li>
+                <li>For each SIP, provide:
+                    <ul class="list-circle list-inside ml-4">
+                        <li>A descriptive name (e.g., "Child Education SIP").</li>
+                        <li>Monthly investment amount.</li>
+                        <li>Start and end age for the SIP (when you start and stop investing).</li>
+                        <li>Expected annual return rate (in percentage).</li>
+                    </ul>
+                </li>
+                <li>Use the delete button to remove an individual SIP entry.</li>
+            </ul>
+
+            <h4 class="text-xl font-semibold text-gray-700 mt-6 mb-2">Adding SWP Entries</h4>
+            <ul class="list-disc list-inside text-gray-600 leading-relaxed space-y-1">
+                <li>Click "Add SWP Entry" to add each withdrawal plan.</li>
+                <li>For each SWP, provide:
+                    <ul class="list-circle list-inside ml-4">
+                        <li>A descriptive name (e.g., "Retirement Income").</li>
+                        <li>Monthly withdrawal amount.</li>
+                        <li>Start and end age for the SWP (when you start and stop withdrawing).</li>
+                    </ul>
+                </li>
+                <li>Use the delete button to remove an individual SWP entry.</li>
+            </ul>
+
+            <h4 class="text-xl font-semibold text-gray-700 mt-6 mb-2">Calculating Results</h4>
+            <ul class="list-disc list-inside text-gray-600 leading-relaxed space-y-1">
+                <li>Click "Calculate" to see your projected total corpus growth and individual SIP performance.</li>
+                <li>The main chart shows your total corpus over time, considering all SIPs and SWPs.</li>
+                <li>Use the dropdown menu to view the individual corpus growth of each SIP.</li>
+                <li>The "Reset All" button clears all inputs and added entries.</li>
+            </ul>
+
+            <h4 class="text-xl font-semibold text-gray-700 mt-6 mb-2">Tips</h4>
+            <ul class="list-disc list-inside text-gray-600 leading-relaxed space-y-1">
+                <li>You can model multiple SIPs and SWPs with different durations and rates.</li>
+                <li>The SWP feature helps you visualize how withdrawals affect your overall corpus.</li>
+                <li>Experiment with different return rates and investment durations to understand their impact.</li>
+            </ul>
+        </div>
     </div>
-    
-    <!-- Calculator Section -->
-    <div id="calculator" class="section active">
-      <div>
-        <label>Current Age:</label>
-        <input type="number" id="currentAge" min="0"><br>
 
-        <label>Target Age (to hold corpus):</label>
-        <input type="number" id="targetAge" min="0"><br>
-
-        <label>SWP Start Age (optional):</label>
-        <input type="number" id="swpStartAge" min="0"><br>
-
-        <label>SWP Monthly Amount (optional):</label>
-        <input type="number" id="swpAmount" min="0"><br>
-
-        <h3>SIP Entries</h3>
-        <div id="sipContainer"></div>
-        <button onclick="addSIPEntry()">Add SIP Entry</button>
-        <button onclick="calculateSIP()">Calculate</button>
-      </div>
-      
-      <div id="sipSelector" style="margin-top: 40px;"></div>
-
-      <div id="result-area">
-        <div id="results"></div>
-       
-          <h3> CORPUS OVER YEARS</h3>
-       <canvas id="corpusChart" width="600" height="300"></canvas>
-      </div>
+    <div id="messageBox" class="fixed bottom-4 right-4 bg-red-600 text-white px-8 py-4 rounded-lg shadow-xl hidden z-50 transition-opacity duration-300 opacity-0 min-w-[250px] text-center">
+        <p id="messageText" class="font-medium"></p>
     </div>
-    
-    <!-- Privacy Policy Section -->
-    <div id="privacy-policy" class="section">
-      <h3>Privacy Policy</h3>
-      <p>Last updated: May 2024</p>
-      
-      <h4>Information We Collect</h4>
-      <p>This application does not collect, store, or transmit any personal data. All calculations are performed locally in your browser.</p>
-      
-      <h4>Data Security</h4>
-      <p>Since no data leaves your device, your information remains secure and private.</p>
-      
-      <h4>Cookies</h4>
-      <p>This application does not use cookies or any tracking technologies.</p>
-      
-      <h4>Changes to This Policy</h4>
-      <p>We may update our Privacy Policy from time to time. Any changes will be posted on this page.</p>
-    </div>
-    
-    <!-- User Manual Section -->
-    <div id="user-manual" class="section">
-      <h3>User Manual</h3>
-      
-      <h4>Getting Started</h4>
-      <p>1. Enter your current age and target age (when you want to access your corpus).</p>
-      <p>2. Optionally enter SWP (Systematic Withdrawal Plan) details if you plan to withdraw money.</p>
-      
-      <h4>Adding SIP Entries</h4>
-      <p>1. Click "Add SIP Entry" to add each investment plan.</p>
-      <p>2. For each SIP, provide:
-        <ul>
-          <li>A name for identification</li>
-          <li>Monthly investment amount</li>
-          <li>Start and end age for the SIP</li>
-          <li>Expected annual return rate</li>
-        </ul>
-      </p>
-      
-      <h4>Calculating Results</h4>
-      <p>1. Click "Calculate" to see your projected corpus growth.</p>
-      <p>2. The chart shows your total corpus over time.</p>
-      <p>3. Use the dropdown to view individual SIP performance.</p>
-      
-      <h4>Tips</h4>
-      <p>- You can model multiple SIPs with different durations and returns.</p>
-      <p>- The SWP feature helps you see how withdrawals affect your corpus.</p>
-    </div>
-  </div>
 
-  <script>
-  let sipEntries = [];
-  let chartInstance = null;
-  let sipChartInstance = null;
+    <script>
+        let sipEntries = []; // Stores references to SIP input elements and their calculated data
+        let swpEntries = []; // Stores references to SWP input elements
+        let chartInstance = null; // Chart.js instance for total corpus
+        let sipChartInstance = null; // Chart.js instance for individual SIP corpus
 
-  // Show the selected section and hide others
-  function showSection(sectionId) {
-    document.querySelectorAll('.section').forEach(section => {
-      section.classList.remove('active');
-    });
-    document.getElementById(sectionId).classList.add('active');
-  }
+        // Function to display temporary messages (e.g., validation errors)
+        function showMessage(message, type = 'error') {
+            const messageBox = document.getElementById('messageBox');
+            const messageText = document.getElementById('messageText');
 
-  function addSIPEntry() {
-    const container = document.getElementById('sipContainer');
+            messageText.innerText = message;
+            messageBox.classList.remove('bg-red-600', 'bg-green-600');
+            if (type === 'error') {
+                messageBox.classList.add('bg-red-600');
+            } else {
+                messageBox.classList.add('bg-green-600');
+            }
 
-    const div = document.createElement('div');
-    div.classList.add('sip-entry');
+            messageBox.classList.remove('hidden', 'opacity-0');
+            messageBox.classList.add('opacity-100');
 
-    const index = sipEntries.length;
-
-    div.innerHTML = `
-      <label>SIP Name:</label>
-      <input type="text" class="sip-name" placeholder="Eg: Child Education SIP"><br>
-      <label>SIP Amount (monthly):</label>
-      <input type="number" class="sip-amount"><br>
-      <label>Start Age:</label>
-      <input type="number" class="sip-start"><br>
-      <label>End Age:</label>
-      <input type="number" class="sip-end"><br>
-      <label>Expected Annual Return (%):</label>
-      <input type="number" class="sip-rate" step="0.01"><br>
-    `;
-
-    container.appendChild(div);
-
-    sipEntries.push({
-      name: div.querySelector('.sip-name'),
-      amount: div.querySelector('.sip-amount'),
-      startAge: div.querySelector('.sip-start'),
-      endAge: div.querySelector('.sip-end'),
-      rate: div.querySelector('.sip-rate'),
-      value: 0,
-      corpusPerYear: []
-    });
-  }
-
-  function calculateSIP() {
-    const currentAge = parseInt(document.getElementById('currentAge').value);
-    const targetAge = parseInt(document.getElementById('targetAge').value);
-    const swpStartAge = parseInt(document.getElementById('swpStartAge').value) || null;
-    const swpAmount = parseInt(document.getElementById('swpAmount').value) || 0;
-    const results = document.getElementById('results');
-    results.innerHTML = '';
-
-    if (isNaN(currentAge) || isNaN(targetAge)) {
-      results.innerText = "Please enter valid numeric values.";
-      return;
-    }
-
-    const labels = [];
-    const totalCorpusData = [];
-
-    for (let entry of sipEntries) {
-      entry.value = 0;
-      entry.corpusPerYear = [];
-    }
-
-    for (let age = currentAge; age <= targetAge; age++) {
-      let totalCorpus = 0;
-
-      for (let entry of sipEntries) {
-        const amount = parseInt(entry.amount.value);
-        const start = parseInt(entry.startAge.value);
-        const end = parseInt(entry.endAge.value);
-        const rate = parseFloat(entry.rate.value) / 100;
-        const monthlyRate = rate / 12;
-
-        for (let m = 0; m < 12; m++) {
-          if (start <= age && age <= end) {
-            entry.value += amount;
-          }
-          entry.value *= (1 + monthlyRate);
+            setTimeout(() => {
+                messageBox.classList.remove('opacity-100');
+                messageBox.classList.add('opacity-0');
+                setTimeout(() => {
+                    messageBox.classList.add('hidden');
+                }, 300); // Allow fade-out animation
+            }, 5000); // Message visible for 5 seconds
         }
 
-        entry.corpusPerYear.push(entry.value);
-        totalCorpus += entry.value;
-      }
+        // Function to switch between main sections (Calculator, Privacy, Manual)
+        function showSection(sectionId, clickedButton) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            // Show the selected section
+            document.getElementById(sectionId).classList.add('active');
 
-      // SWP deduction after start age
-      if (swpStartAge && age >= swpStartAge) {
-        for (let m = 0; m < 12; m++) {
-          if (totalCorpus > swpAmount) {
-            totalCorpus -= swpAmount;
-          } else {
-            totalCorpus = 0;
-            break;
-          }
+            // Update active button styling
+            document.querySelectorAll('.menu-buttons button').forEach(button => {
+                button.classList.remove('bg-blue-600', 'text-white');
+                button.classList.add('bg-gray-300', 'text-gray-800');
+            });
+            clickedButton.classList.remove('bg-gray-300', 'text-gray-800');
+            clickedButton.classList.add('bg-blue-600', 'text-white');
+
+            // If switching away from calculator, hide results area
+            if (sectionId !== 'calculator') {
+                document.getElementById('result-area').classList.add('hidden');
+            }
         }
-      }
 
-      results.innerHTML += `<div><strong>Age ${age}</strong>: ₹${totalCorpus.toFixed(2)}</div>`;
-      labels.push(`Age ${age}`);
-      totalCorpusData.push(totalCorpus.toFixed(2));
-    }
+        // Function to add a new SIP input entry
+        function addSIPEntry() {
+            const container = document.getElementById('sipContainer');
+            const index = sipEntries.length; // Unique index for this new SIP entry
 
-    renderChart(labels, totalCorpusData);
-    populateSIPSelector(labels);
-  }
+            const div = document.createElement('div');
+            div.classList.add('sip-entry', 'bg-gray-50', 'p-4', 'rounded-lg', 'shadow-sm', 'border', 'border-gray-200', 'grid', 'grid-cols-1', 'md:grid-cols-2', 'gap-y-3', 'gap-x-6', 'relative');
+            div.setAttribute('data-index', index); // Store index on the element
 
-  function renderChart(labels, data) {
-    const ctx = document.getElementById('corpusChart').getContext('2d');
-    if (chartInstance) chartInstance.destroy();
+            div.innerHTML = `
+                <button onclick="deleteSIPEntry(${index})" class="absolute top-2 right-2 text-red-500 hover:text-red-700 text-xl font-bold leading-none">&times;</button>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">SIP Name:</label>
+                    <input type="text" class="sip-name w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" placeholder="Eg: Child Education SIP">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Monthly Amount (₹):</label>
+                    <input type="number" class="sip-amount w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" min="0">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Start Age:</label>
+                    <input type="number" class="sip-start w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" min="0">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">End Age:</label>
+                    <input type="number" class="sip-end w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" min="0">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Annual Return (%):</label>
+                    <input type="number" class="sip-rate w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" step="0.01" min="0">
+                </div>
+            `;
+            container.appendChild(div);
 
-    chartInstance = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: labels,
-        datasets: [{
-          label: 'Total Corpus Over Time',
-          data: data,
-          borderColor: 'green',
-          backgroundColor: 'rgba(0, 128, 0, 0.1)',
-          tension: 0.3,
-          fill: true
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          tooltip: {
-            callbacks: {
-              label: ctx => `₹${parseFloat(ctx.raw).toLocaleString('en-IN')}`
-            }
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              callback: value => `₹${value.toLocaleString('en-IN')}`
-            }
-          }
+            // Store references to the input elements and initialize values
+            sipEntries.push({
+                element: div, // Reference to the parent div for easy removal
+                nameInput: div.querySelector('.sip-name'),
+                amountInput: div.querySelector('.sip-amount'),
+                startAgeInput: div.querySelector('.sip-start'),
+                endAgeInput: div.querySelector('.sip-end'),
+                rateInput: div.querySelector('.sip-rate'),
+                corpusPerYear: [] // To store annual corpus for individual SIP chart
+            });
         }
-      }
-    });
-  }
 
-  function populateSIPSelector(labels) {
-    const selectorDiv = document.getElementById('sipSelector');
-    selectorDiv.innerHTML = `
-      <h3>Select a SIP to view its individual corpus growth</h3>
-      <select id="sipDropdown" onchange="showSIPChart(this.value)">
-        <option disabled selected>Select SIP</option>
-        ${sipEntries.map((entry, i) => `<option value="${i}">${entry.name.value || 'SIP #' + (i+1)}</option>`).join('')}
-      </select>
-      <canvas id="sipChart" width="600" height="300"></canvas>
-    `;
-  }
+        // Function to delete a specific SIP entry
+        function deleteSIPEntry(indexToDelete) {
+            // Find the entry in the sipEntries array
+            const entryToDelete = sipEntries.find((entry, i) => i === indexToDelete);
+            if (entryToDelete && entryToDelete.element) {
+                entryToDelete.element.remove(); // Remove the HTML element from the DOM
+                // Filter out the deleted entry and re-index the remaining ones
+                sipEntries = sipEntries.filter((entry, i) => i !== indexToDelete);
 
-  function showSIPChart(index) {
-    index = parseInt(index);
-    const selected = sipEntries[index];
-    const ctx = document.getElementById('sipChart').getContext('2d');
-
-    if (sipChartInstance) sipChartInstance.destroy();
-
-    sipChartInstance = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: selected.corpusPerYear.map((_, i) => `Age ${parseInt(document.getElementById('currentAge').value) + i}`),
-        datasets: [{
-          label: selected.name.value || `SIP #${index+1}`,
-          data: selected.corpusPerYear.map(v => v.toFixed(2)),
-          borderColor: 'blue',
-          backgroundColor: 'rgba(0, 0, 255, 0.1)',
-          tension: 0.3,
-          fill: true
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          tooltip: {
-            callbacks: {
-              label: ctx => `₹${parseFloat(ctx.raw).toLocaleString('en-IN')}`
+                // Update data-index attributes and onclick handlers for remaining entries
+                sipEntries.forEach((entry, newIndex) => {
+                    entry.element.setAttribute('data-index', newIndex);
+                    entry.element.querySelector('button').setAttribute('onclick', `deleteSIPEntry(${newIndex})`);
+                });
             }
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              callback: value => `₹${value.toLocaleString('en-IN')}`
+            // If charts are visible, recalculate to update them
+            if (!document.getElementById('result-area').classList.contains('hidden')) {
+                calculateSIP();
             }
-          }
         }
-      }
-    });
-  }
-  </script>
+
+        // Function to add a new SWP input entry
+        function addSWPEntry() {
+            const container = document.getElementById('swpContainer');
+            const index = swpEntries.length; // Unique index for this new SWP entry
+
+            const div = document.createElement('div');
+            div.classList.add('swp-entry', 'bg-gray-50', 'p-4', 'rounded-lg', 'shadow-sm', 'border', 'border-gray-200', 'grid', 'grid-cols-1', 'md:grid-cols-2', 'gap-y-3', 'gap-x-6', 'relative');
+            div.setAttribute('data-index', index); // Store index on the element
+
+            div.innerHTML = `
+                <button onclick="deleteSWPEntry(${index})" class="absolute top-2 right-2 text-red-500 hover:text-red-700 text-xl font-bold leading-none">&times;</button>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">SWP Name:</label>
+                    <input type="text" class="swp-name w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" placeholder="Eg: Retirement Income SWP">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Monthly Amount (₹):</label>
+                    <input type="number" class="swp-amount w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" min="0">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Start Age:</label>
+                    <input type="number" class="swp-start w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" min="0">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">End Age:</label>
+                    <input type="number" class="swp-end w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500" min="0">
+                </div>
+            `;
+            container.appendChild(div);
+
+            // Store references to the input elements
+            swpEntries.push({
+                element: div,
+                nameInput: div.querySelector('.swp-name'),
+                amountInput: div.querySelector('.swp-amount'),
+                startAgeInput: div.querySelector('.swp-start'),
+                endAgeInput: div.querySelector('.swp-end')
+            });
+        }
+
+        // Function to delete a specific SWP entry
+        function deleteSWPEntry(indexToDelete) {
+            const entryToDelete = swpEntries.find((entry, i) => i === indexToDelete);
+            if (entryToDelete && entryToDelete.element) {
+                entryToDelete.element.remove();
+                swpEntries = swpEntries.filter((entry, i) => i !== indexToDelete);
+
+                swpEntries.forEach((entry, newIndex) => {
+                    entry.element.setAttribute('data-index', newIndex);
+                    entry.element.querySelector('button').setAttribute('onclick', `deleteSWPEntry(${newIndex})`);
+                });
+            }
+            // If charts are visible, recalculate to update them
+            if (!document.getElementById('result-area').classList.contains('hidden')) {
+                calculateSIP();
+            }
+        }
+
+        // Main calculation function
+        function calculateSIP() {
+            console.log("Calculate button clicked!"); // New log for immediate feedback
+            showMessage("Attempting calculation...", "success"); // New message for immediate feedback
+
+            try {
+                const currentAge = parseInt(document.getElementById('currentAge').value);
+                const targetAge = parseInt(document.getElementById('targetAge').value);
+                const resultsDiv = document.getElementById('results');
+                resultsDiv.innerHTML = ''; // Clear previous results
+
+                // --- Input Validation ---
+                console.log("Starting input validation.");
+                if (isNaN(currentAge) || currentAge < 0) {
+                    showMessage("Please enter a valid Current Age (a non-negative number).");
+                    return;
+                }
+                if (isNaN(targetAge) || targetAge < 0) {
+                    showMessage("Please enter a valid Target Age (a non-negative number).");
+                    return;
+                }
+                if (targetAge <= currentAge) {
+                    showMessage("Target Age must be greater than Current Age.");
+                    return;
+                }
+
+                // Validate SIP entries
+                console.log(`Validating ${sipEntries.length} SIP entries.`);
+                if (sipEntries.length === 0) {
+                    showMessage("Please add at least one SIP entry to calculate.");
+                    return;
+                }
+                for (let i = 0; i < sipEntries.length; i++) {
+                    const entry = sipEntries[i];
+                    // Add a check for null/undefined input elements
+                    if (!entry || !entry.amountInput || !entry.startAgeInput || !entry.endAgeInput || !entry.rateInput) {
+                        showMessage(`Error: SIP entry #${i + 1} has missing input elements. Please refresh or check the entry.`);
+                        console.error(`Missing input elements for SIP entry #${i + 1}`, entry);
+                        return;
+                    }
+
+                    const name = entry.nameInput.value || `SIP #${i + 1}`;
+                    const amount = parseInt(entry.amountInput.value);
+                    const start = parseInt(entry.startAgeInput.value);
+                    const end = parseInt(entry.endAgeInput.value);
+                    const rate = parseFloat(entry.rateInput.value);
+
+                    if (isNaN(amount) || amount <= 0) {
+                        showMessage(`SIP "${name}": Monthly Amount must be a positive number.`);
+                        return;
+                    }
+                    if (isNaN(start) || start < 0) {
+                        showMessage(`SIP "${name}": Start Age must be a non-negative number.`);
+                        return;
+                    }
+                    if (isNaN(end) || end < 0) {
+                        showMessage(`SIP "${name}": End Age must be a non-negative number.`);
+                        return;
+                    }
+                    if (end < start) {
+                        showMessage(`SIP "${name}": End Age (${end}) must be greater than or equal to Start Age (${start}).`);
+                        return;
+                    }
+                    if (start > targetAge || end < currentAge) {
+                         showMessage(`SIP "${name}": SIP duration must overlap with the overall calculation period (Current Age to Target Age).`);
+                         return;
+                    }
+                    if (isNaN(rate) || rate < 0) {
+                        showMessage(`SIP "${name}": Annual Return must be a non-negative number.`);
+                        return;
+                    }
+                }
+
+                // Validate SWP entries
+                console.log(`Validating ${swpEntries.length} SWP entries.`);
+                for (let i = 0; i < swpEntries.length; i++) {
+                    const entry = swpEntries[i];
+                    // Add a check for null/undefined input elements
+                    if (!entry || !entry.amountInput || !entry.startAgeInput || !entry.endAgeInput) {
+                        showMessage(`Error: SWP entry #${i + 1} has missing input elements. Please refresh or check the entry.`);
+                        console.error(`Missing input elements for SWP entry #${i + 1}`, entry);
+                        return;
+                    }
+
+                    const name = entry.nameInput.value || `SWP #${i + 1}`;
+                    const amount = parseInt(entry.amountInput.value);
+                    const start = parseInt(entry.startAgeInput.value);
+                    const end = parseInt(entry.endAgeInput.value);
+
+                    if (isNaN(amount) || amount <= 0) {
+                        showMessage(`SWP "${name}": Monthly Amount must be a positive number.`);
+                        return;
+                    }
+                    if (isNaN(start) || start < 0) {
+                        showMessage(`SWP "${name}": Start Age must be a non-negative number.`);
+                        return;
+                    }
+                    if (isNaN(end) || end < 0) {
+                        showMessage(`SWP "${name}": End Age must be a non-negative number.`);
+                        return;
+                    }
+                    if (end < start) {
+                        showMessage(`SWP "${name}": End Age (${end}) must be greater than or equal to Start Age (${start}).`);
+                        return;
+                    }
+                    if (start > targetAge || end < currentAge) {
+                        showMessage(`SWP "${name}": SWP duration must overlap with the overall calculation period (Current Age to Target Age).`);
+                        return;
+                    }
+                }
+                // --- End Validation ---
+                console.log("Input validation complete. Proceeding with calculation.");
+
+                const labels = []; // Array to store age labels for the chart
+                const totalCorpusData = []; // Array to store total corpus value per year
+
+                // Initialize current accumulated value for each SIP
+                sipEntries.forEach(entry => {
+                    entry.currentAccumulatedValue = 0; // This will carry over year-to-year
+                    entry.corpusPerYear = []; // Reset for new calculation
+                });
+
+                // Loop through each year from currentAge to targetAge
+                console.log(`Calculating corpus from age ${currentAge} to ${targetAge}.`);
+                for (let age = currentAge; age <= targetAge; age++) {
+                    let currentYearTotalCorpus = 0; // Total corpus from all SIPs for this specific year
+
+                    // Calculate corpus for each individual SIP for the current year
+                    sipEntries.forEach(entry => {
+                        const amount = parseInt(entry.amountInput.value);
+                        const start = parseInt(entry.startAgeInput.value);
+                        const end = parseInt(entry.endAgeInput.value);
+                        const rate = parseFloat(entry.rateInput.value);
+                        const monthlyRate = (rate / 100) / 12;
+
+                        let sipValueThisYear = entry.currentAccumulatedValue; // Start with last year's accumulated value
+
+                        // If SIP is active for the current age, add monthly contributions and compound
+                        if (age >= start && age <= end) {
+                            for (let m = 0; m < 12; m++) {
+                                sipValueThisYear += amount; // Add monthly investment
+                                sipValueThisYear *= (1 + monthlyRate); // Compound monthly
+                            }
+                        } else if (age > end) {
+                            // If SIP has ended, just compound the accumulated value without new contributions
+                            for (let m = 0; m < 12; m++) {
+                                sipValueThisYear *= (1 + monthlyRate);
+                            }
+                        }
+                        // If age < start, sipValueThisYear remains 0 (or its previous value if it started earlier and then stopped)
+
+                        entry.currentAccumulatedValue = sipValueThisYear; // Update for next year's calculation
+                        entry.corpusPerYear.push(sipValueThisYear); // Store for individual SIP chart
+                        currentYearTotalCorpus += sipValueThisYear; // Add to overall total
+                    });
+
+                    // Apply SWP deductions for the current year
+                    swpEntries.forEach(swpEntry => {
+                        const swpAmount = parseInt(swpEntry.amountInput.value);
+                        const swpStart = parseInt(swpEntry.startAgeInput.value);
+                        const swpEnd = parseInt(swpEntry.endAgeInput.value);
+
+                        if (age >= swpStart && age <= swpEnd) {
+                            const annualSWPDeduction = swpAmount * 12;
+                            if (currentYearTotalCorpus > annualSWPDeduction) {
+                                currentYearTotalCorpus -= annualSWPDeduction;
+                            } else {
+                                currentYearTotalCorpus = 0; // Corpus depleted
+                            }
+                        }
+                    });
+
+                    labels.push(`Age ${age}`);
+                    totalCorpusData.push(currentYearTotalCorpus); // Store raw number for chart
+                    resultsDiv.innerHTML += `<div class="py-1 border-b border-gray-100 last:border-b-0"><strong>Age ${age}</strong>: ₹${currentYearTotalCorpus.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>`;
+                }
+
+                // Render the main total corpus chart
+                console.log("Labels for chart:", labels);
+                console.log("Total Corpus Data for chart:", totalCorpusData);
+                renderChart(labels, totalCorpusData);
+                // Populate the dropdown for individual SIP charts
+                populateSIPSelector(labels);
+
+                // Show the result area after successful calculation
+                const resultArea = document.getElementById('result-area');
+                console.log("Before showing result area - classList:", resultArea.classList.value, "display:", resultArea.style.display);
+                resultArea.classList.remove('hidden');
+                resultArea.style.display = 'block'; // Ensure it's block
+                console.log("After showing result area - classList:", resultArea.classList.value, "display:", resultArea.style.display);
+
+                showMessage("Calculation complete!", "success"); // Success message
+                console.log("calculateSIP finished successfully.");
+            } catch (error) {
+                console.error("An error occurred during calculation:", error);
+                showMessage(`An unexpected error occurred: ${error.message}. Please check console for details.`, 'error');
+            }
+        }
+
+        // Function to render the main corpus chart
+        function renderChart(labels, data) {
+            const ctx = document.getElementById('corpusChart').getContext('2d');
+            if (!ctx) {
+                console.error("Failed to get 2D context for corpusChart canvas.");
+                showMessage("Error: Could not initialize main chart. Canvas context not found.", "error");
+                return;
+            }
+            console.log("Got 2D context for corpusChart:", ctx);
+
+            if (chartInstance) chartInstance.destroy(); // Destroy previous chart instance if exists
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Corpus Over Time',
+                        data: data,
+                        borderColor: 'rgb(34, 197, 94)', // Tailwind green-500
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        tension: 0.3, // Smooth lines
+                        fill: true,
+                        pointRadius: 3,
+                        pointBackgroundColor: 'rgb(34, 197, 94)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false, // Allow canvas to resize freely
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => `₹${parseFloat(ctx.raw).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                            },
+                            backgroundColor: 'rgba(0,0,0,0.7)',
+                            titleFont: { size: 14 },
+                            bodyFont: { size: 14 },
+                            padding: 10,
+                            displayColors: false
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Corpus Value (₹)',
+                                font: { size: 16, weight: 'bold' }
+                            },
+                            ticks: {
+                                callback: value => `₹${value.toLocaleString('en-IN')}`,
+                                font: { size: 12 }
+                            },
+                            grid: {
+                                color: 'rgba(200, 200, 200, 0.2)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Age (Years)',
+                                font: { size: 16, weight: 'bold' }
+                            },
+                            ticks: {
+                                font: { size: 12 }
+                            },
+                            grid: {
+                                color: 'rgba(200, 200, 200, 0.2)'
+                            }
+                        }
+                    }
+                }
+            });
+            console.log("Corpus chart rendered.");
+        }
+
+        // Function to populate the dropdown for individual SIP charts
+        function populateSIPSelector(labels) {
+            const selectorDiv = document.getElementById('sipSelector');
+            const sipDropdown = document.getElementById('sipDropdown');
+            sipDropdown.innerHTML = `<option disabled selected>Select a SIP to view its individual corpus growth</option>`; // Reset dropdown
+
+            // Add options for each SIP entry
+            sipEntries.forEach((entry, i) => {
+                const option = document.createElement('option');
+                option.value = i;
+                option.innerText = entry.nameInput.value || `SIP #${i + 1}`;
+                sipDropdown.appendChild(option);
+            });
+            // Ensure the individual chart canvas is present
+            if (!document.getElementById('sipChart')) {
+                const canvas = document.createElement('canvas');
+                canvas.id = 'sipChart';
+                canvas.classList.add('w-full', 'h-auto', 'max-h-96', 'bg-gray-50', 'rounded-lg', 'border', 'border-gray-200', 'p-2');
+                selectorDiv.appendChild(canvas);
+            }
+            // Reset individual chart if it exists
+            if (sipChartInstance) sipChartInstance.destroy();
+            console.log("SIP selector populated.");
+        }
+
+        // Function to show individual SIP chart when selected from dropdown
+        function showSIPChart(index) {
+            index = parseInt(index);
+            const selected = sipEntries[index];
+            if (!selected) {
+                console.warn("No SIP selected or invalid index for individual chart.");
+                return; // Guard against invalid index
+            }
+            console.log(`Showing individual chart for SIP: ${selected.nameInput.value || `SIP #${index + 1}`}`);
+
+            const ctx = document.getElementById('sipChart').getContext('2d');
+            if (!ctx) {
+                console.error("Failed to get 2D context for sipChart canvas.");
+                showMessage("Error: Could not initialize individual SIP chart. Canvas context not found.", "error");
+                return;
+            }
+            console.log("Got 2D context for sipChart:", ctx);
+
+            if (sipChartInstance) sipChartInstance.destroy(); // Destroy previous chart instance
+
+            const currentAge = parseInt(document.getElementById('currentAge').value);
+            const labels = selected.corpusPerYear.map((_, i) => `Age ${currentAge + i}`);
+
+            sipChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: selected.nameInput.value || `SIP #${index + 1}`,
+                        data: selected.corpusPerYear,
+                        borderColor: 'rgb(59, 130, 246)', // Tailwind blue-500
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.3,
+                        fill: true,
+                        pointRadius: 3,
+                        pointBackgroundColor: 'rgb(59, 130, 246)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => `₹${parseFloat(ctx.raw).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                            },
+                            backgroundColor: 'rgba(0,0,0,0.7)',
+                            titleFont: { size: 14 },
+                            bodyFont: { size: 14 },
+                            padding: 10,
+                            displayColors: false
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Corpus Value (₹)',
+                                font: { size: 16, weight: 'bold' }
+                            },
+                            ticks: {
+                                callback: value => `₹${value.toLocaleString('en-IN')}`,
+                                font: { size: 12 }
+                            },
+                            grid: {
+                                color: 'rgba(200, 200, 200, 0.2)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Age (Years)',
+                                font: { size: 16, weight: 'bold' }
+                            },
+                            ticks: {
+                                font: { size: 12 }
+                            },
+                            grid: {
+                                color: 'rgba(200, 200, 200, 0.2)'
+                            }
+                        }
+                    }
+                }
+            });
+            console.log("Individual SIP chart rendered.");
+        }
+
+        // Function to reset all inputs and clear dynamic entries
+        function resetAll() {
+            document.getElementById('currentAge').value = '';
+            document.getElementById('targetAge').value = '';
+
+            // Clear SIP entries
+            document.getElementById('sipContainer').innerHTML = '';
+            sipEntries = [];
+            addSIPEntry(); // Add one default SIP entry back
+
+            // Clear SWP entries
+            document.getElementById('swpContainer').innerHTML = '';
+            swpEntries = [];
+
+            // Hide results area
+            const resultArea = document.getElementById('result-area');
+            resultArea.classList.add('hidden');
+            resultArea.style.display = 'none'; // Ensure it's hidden
+
+            // Destroy chart instances if they exist
+            if (chartInstance) {
+                chartInstance.destroy();
+                chartInstance = null;
+            }
+            if (sipChartInstance) {
+                sipChartInstance.destroy();
+                sipChartInstance = null;
+            }
+            // Reset dropdown
+            document.getElementById('sipDropdown').innerHTML = `<option disabled selected>Select a SIP to view its individual corpus growth</option>`;
+            showMessage("All data has been reset!", "success");
+            console.log("All data reset.");
+        }
+
+        // Initialize with one SIP entry and pre-fill main age inputs when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            addSIPEntry();
+            // Pre-fill main age inputs
+            document.getElementById('currentAge').value = 30;
+            document.getElementById('targetAge').value = 60;
+
+            // Pre-fill the first SIP entry with example values
+            if (sipEntries.length > 0) {
+                sipEntries[0].nameInput.value = "My First SIP";
+                sipEntries[0].amountInput.value = 5000;
+                sipEntries[0].startAgeInput.value = 30;
+                sipEntries[0].endAgeInput.value = 60;
+                sipEntries[0].rateInput.value = 12;
+            }
+
+            // Set calculator button as active on load
+            showSection('calculator', document.getElementById('calculator-btn'));
+            console.log("Application initialized with default values.");
+        });
+    </script>
 
 </body>
 </html>
